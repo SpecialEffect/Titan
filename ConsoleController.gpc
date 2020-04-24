@@ -287,6 +287,16 @@ main {
 		StickNeutral();
 	}
 	
+	//Convert Left Stick Directions To Inputs
+	if(key_event_active(KEY_U)) {
+		toggle_convert_left_stick_directions_to_buttons_on = !toggle_convert_left_stick_directions_to_buttons_on;
+	}
+	
+	//Convert Right Stick Directions To Inputs
+	if(key_event_active(KEY_D)) {
+		toggle_convert_right_stick_directions_to_buttons_on = !toggle_convert_right_stick_directions_to_buttons_on;
+	}
+	
 	//Execute Stick Direction Holds
 	if(hold_left_stick_directions_and_distances_permitted) {
 		if(hold_left_stick_directions_and_distances[0]) {
@@ -315,11 +325,6 @@ main {
 		}
 	}
 	
-	//Convert Left Stick Directions To Inputs
-	if(key_event_active(KEY_U)) {
-		toggle_convert_left_stick_directions_to_buttons_on = !toggle_convert_left_stick_directions_to_buttons_on;
-	}
-	
 	if(toggle_convert_left_stick_directions_to_buttons_on) {
 		current_left_stick_angle = atan2(get_actual(STICK_2_X), -get_actual(STICK_2_Y));
 		if(current_left_stick_distance > convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance) {
@@ -342,12 +347,7 @@ main {
 	}
 	else {
 		convert_left_stick_directions_to_buttons_override = FALSE;
-	}
-	
-	//Convert Right Stick Directions To Inputs
-	if(key_event_active(KEY_D)) {
-		toggle_convert_right_stick_directions_to_buttons_on = !toggle_convert_right_stick_directions_to_buttons_on;
-	}
+	}	
 	
 	if(toggle_convert_right_stick_directions_to_buttons_on) {
 		current_right_stick_angle = atan2(get_actual(STICK_1_X), -get_actual(STICK_1_Y));
