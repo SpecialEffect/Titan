@@ -193,12 +193,8 @@ main {
 		set_val(STICK_1_X, get_actual(STICK_1_X));
 		set_val(STICK_1_Y, get_actual(STICK_1_Y));
 		if(toggle_convert_left_stick_directions_to_buttons_on == FALSE || convert_left_stick_directions_to_buttons_override) {
-			if(current_left_stick_distance > hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius) {
-				hold_left_stick_directions_and_distances_permitted = FALSE;
-			}
-			else if(current_left_stick_distance <= hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius) {
-				hold_left_stick_directions_and_distances_permitted = !FALSE;
-			}
+			// permit if < threshold for denying
+			hold_left_stick_directions_and_distances_permitted = (current_left_stick_distance <= hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius);
 		}
 	}
 	if(swap_sticks_on) {
@@ -207,12 +203,8 @@ main {
 		set_val(STICK_1_X, get_actual(STICK_2_X));
 		set_val(STICK_1_Y, get_actual(STICK_2_Y));
 		if(toggle_convert_right_stick_directions_to_buttons_on == FALSE || convert_right_stick_directions_to_buttons_override) {
-			if(current_right_stick_distance > hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius) {
-				hold_left_stick_directions_and_distances_permitted = FALSE;
-			}
-			else if(current_right_stick_distance <= hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius){
-				hold_left_stick_directions_and_distances_permitted = !FALSE;
-			}
+			// permit if < threshold for denying
+			hold_left_stick_directions_and_distances_permitted = (current_right_stick_distance <= hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius);
 		}
 	}
 	if(swap_sticks_on == FALSE) {
@@ -341,13 +333,14 @@ main {
 				ConvertLeftStickDirectionsToButtons(3);
 			}
 		}
-		if(current_left_stick_distance <= convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance) {
+		else { //current_left_stick_distance <= convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance
 			convert_left_stick_directions_to_buttons_override = FALSE;
 		}
 	}
 	else {
 		convert_left_stick_directions_to_buttons_override = FALSE;
-	}	
+	}
+	
 	
 	if(toggle_convert_right_stick_directions_to_buttons_on) {
 		current_right_stick_angle = atan2(get_actual(STICK_1_X), -get_actual(STICK_1_Y));
@@ -365,7 +358,7 @@ main {
 				ConvertRightStickDirectionsToButtons(3);
 			}
 		}
-		if(current_right_stick_distance <= convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance) {
+		else { // current_right_stick_distance <= convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance
 			convert_right_stick_directions_to_buttons_override = FALSE;
 		}
 	}
