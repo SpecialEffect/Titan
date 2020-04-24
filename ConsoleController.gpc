@@ -54,8 +54,8 @@ const fix32 button_value[17] = {100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
 
 //FIXED
 
-//Distance whatever stick is controlling the left stick must travel before denying any hold stick or convert left and right stick directions functions from having an effect.
-const fix32 hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius = 20.0;
+//Distance whatever stick is controlling the left stick must travel before denying any hold stick 
+const fix32 hold_left_stick_deny_stick_deadzone_radius = 20.0;
 
 //Sets the stick axis for each hold left stick directions and distances.
 const uint8 hold_left_stick_directions_and_distances_axis[8] = {STICK_2_Y, STICK_2_Y, STICK_2_X, STICK_2_X, STICK_2_Y, STICK_2_Y, STICK_2_X, STICK_2_X};
@@ -204,7 +204,7 @@ main {
 		set_val(STICK_1_Y, get_actual(STICK_1_Y));
 		if(convert_left_stick_directions_to_buttons_on == FALSE || convert_left_stick_directions_to_buttons_override) {
 			// permit if < threshold for denying
-			hold_left_stick_directions_and_distances_permitted = (current_left_stick_distance <= hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius);
+			hold_left_stick_directions_and_distances_permitted = (current_left_stick_distance <= hold_left_stick_deny_stick_deadzone_radius);
 		}
 	}
 	if(swap_sticks_on) {
@@ -214,7 +214,7 @@ main {
 		set_val(STICK_1_Y, get_actual(STICK_2_Y));
 		if(toggle_convert_right_stick_directions_to_buttons_on == FALSE || convert_right_stick_directions_to_buttons_override) {
 			// permit if < threshold for denying
-			hold_left_stick_directions_and_distances_permitted = (current_right_stick_distance <= hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius);
+			hold_left_stick_directions_and_distances_permitted = (current_right_stick_distance <= hold_left_stick_deny_stick_deadzone_radius);
 		}
 	}
 	if(swap_sticks_on == FALSE) {
