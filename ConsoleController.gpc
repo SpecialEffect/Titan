@@ -24,8 +24,8 @@ const uint8 convert_right_stick_directions_to_buttons_button[4] = {BUTTON_14, BU
 const fix32 convert_right_stick_directions_to_buttons_button_value[4] = {100.0, 100.0, 100.0, 100.0};
 
 //Distances that set the point at which each stick will be converted into a button from their neutral positions. Default is set to 60.0.
-const fix32 convert_left_stick_directions_to_inputs_left_stick_threshold_distance = 60.0;
-const fix32 convert_right_stick_directions_to_inputs_right_stick_threshold_distance = 60.0;
+const fix32 convert_left_stick_directions_to_inputs_left_stick_threshold_distance_square = 60.0*60.0;
+const fix32 convert_right_stick_directions_to_inputs_right_stick_threshold_distance_square = 60.0*60.0;
 
 //The queue press combo press duration is the time in ms for each press when performing a queue press combo, each press duration fluctuates randomly 10ms either side of this value. Default is set to 100ms
 const int16 queue_press_combo_press_duration = 100;
@@ -55,7 +55,7 @@ const fix32 button_value[17] = {100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0,
 //FIXED
 
 //Distance whatever stick is controlling the left stick must travel before denying any hold stick 
-const fix32 hold_left_stick_deny_stick_deadzone_radius = 20.0;
+const fix32 hold_left_stick_deny_stick_deadzone_radius_squared = 20.0*20.0;
 
 //Sets the stick axis for each hold left stick directions and distances.
 const uint8 hold_left_stick_directions_and_distances_axis[8] = {STICK_2_Y, STICK_2_Y, STICK_2_X, STICK_2_X, STICK_2_Y, STICK_2_Y, STICK_2_X, STICK_2_X};
@@ -64,9 +64,9 @@ const uint8 hold_left_stick_directions_and_distances_axis[8] = {STICK_2_Y, STICK
 bool hold_left_stick_directions_and_distances[8] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
 
 //Keeps track of the angle and distance of each stick from their neutral positions.
-fix32 current_left_stick_distance = 0.0;
+fix32 current_left_stick_distance_sq = 0.0;
 fix32 current_left_stick_angle = 0.0;
-fix32 current_right_stick_distance = 0.0;
+fix32 current_right_stick_distance_sq = 0.0;
 fix32 current_right_stick_angle = 0.0;
 
 //Determines if any active hold left stick directions are allowed to have an effect.
@@ -77,8 +77,8 @@ bool convert_left_stick_directions_to_buttons_on = FALSE;
 bool toggle_convert_right_stick_directions_to_buttons_on = FALSE;
 
 //Distance the left and right stick must travel before overriding convert left and right stick directions o buttons if button is false.
-const fix32 convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance = 20.0;
-const fix32 convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance = 20.0;
+const fix32 convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance_square = 20.0*20.0;
+const fix32 convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance_square = 20.0*20.0;
 
 //Overrides for each convert stick directions to buttons. Used when the buttons are set to false.
 bool convert_left_stick_directions_to_buttons_override = FALSE;
@@ -194,9 +194,8 @@ main {
 	//
 	// Here we also block hold stick functions if not permitted
 	
-	
-	current_left_stick_distance = sqrt(sq(get_actual(STICK_2_X)) + sq(get_actual(STICK_2_Y)));
-	current_right_stick_distance = sqrt(sq(get_actual(STICK_1_X)) + sq(get_actual(STICK_1_Y)));
+	current_left_stick_distance_sq = sq(get_actual(STICK_2_X)) + sq(get_actual(STICK_2_Y));
+	current_right_stick_distance_sq = sq(get_actual(STICK_1_X)) + sq(get_actual(STICK_1_Y));
 	if(swap_sticks_on == FALSE) {
 		set_val(STICK_2_X, get_actual(STICK_2_X));
 		set_val(STICK_2_Y, get_actual(STICK_2_Y));
@@ -204,7 +203,7 @@ main {
 		set_val(STICK_1_Y, get_actual(STICK_1_Y));
 		if(convert_left_stick_directions_to_buttons_on == FALSE || convert_left_stick_directions_to_buttons_override) {
 			// permit if < threshold for denying
-			hold_left_stick_directions_and_distances_permitted = (current_left_stick_distance <= hold_left_stick_deny_stick_deadzone_radius);
+			hold_left_stick_directions_and_distances_permitted = (current_left_stick_distance_sq <= hold_left_stick_deny_stick_deadzone_radius_squared);
 		}
 	}
 	if(swap_sticks_on) {
@@ -214,7 +213,7 @@ main {
 		set_val(STICK_1_Y, get_actual(STICK_2_Y));
 		if(toggle_convert_right_stick_directions_to_buttons_on == FALSE || convert_right_stick_directions_to_buttons_override) {
 			// permit if < threshold for denying
-			hold_left_stick_directions_and_distances_permitted = (current_right_stick_distance <= hold_left_stick_deny_stick_deadzone_radius);
+			hold_left_stick_directions_and_distances_permitted = (current_right_stick_distance_sq <= hold_left_stick_deny_stick_deadzone_radius_squared);
 		}
 	}
 	if(swap_sticks_on == FALSE) {
@@ -327,9 +326,9 @@ main {
 		}
 	}
 	
-	if(convert_left_stick_directions_to_buttons_on) {
+	if(convert_left_stick_directions_to_buttons_on) {		
 		current_left_stick_angle = atan2(get_actual(STICK_2_X), -get_actual(STICK_2_Y));
-		if(current_left_stick_distance > convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance) {
+		if(current_left_stick_distance_sq > convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance_square) {
 			if(current_left_stick_angle >= (-PI / 4.0) && current_left_stick_angle < (PI / 4.0)) {
 				ConvertLeftStickDirectionsToButtons(0);
 			}
@@ -343,7 +342,7 @@ main {
 				ConvertLeftStickDirectionsToButtons(3);
 			}
 		}
-		else { //current_left_stick_distance <= convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance
+		else { //current_left_stick_distance_sq <= convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance
 			convert_left_stick_directions_to_buttons_override = FALSE;
 		}
 	}
@@ -354,7 +353,7 @@ main {
 	
 	if(toggle_convert_right_stick_directions_to_buttons_on) {
 		current_right_stick_angle = atan2(get_actual(STICK_1_X), -get_actual(STICK_1_Y));
-		if(current_right_stick_distance > convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance) {
+		if(current_right_stick_distance_sq > convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance_square) {
 			if(current_right_stick_angle >= (-PI / 4.0) && current_right_stick_angle < (PI / 4.0)) {
 				ConvertRightStickDirectionsToButtons(0);
 			}
@@ -368,7 +367,7 @@ main {
 				ConvertRightStickDirectionsToButtons(3);
 			}
 		}
-		else { // current_right_stick_distance <= convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance
+		else { // current_right_stick_distance_sq <= convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance
 			convert_right_stick_directions_to_buttons_override = FALSE;
 		}
 	}
@@ -719,7 +718,7 @@ void ConvertLeftStickDirectionsToButtons(int button) {
 	}
 	if(convert_left_stick_directions_to_buttons_button[button]) {
 		convert_left_stick_directions_to_buttons_override = FALSE;
-		if(current_left_stick_distance > convert_left_stick_directions_to_inputs_left_stick_threshold_distance) {
+		if(current_left_stick_distance_sq > convert_left_stick_directions_to_inputs_left_stick_threshold_distance_square) {
 			set_val(convert_left_stick_directions_to_buttons_button[button], convert_left_stick_directions_to_buttons_button_value[button]);
 		}
 	}
@@ -732,7 +731,7 @@ void ConvertRightStickDirectionsToButtons(int button) {
 	}
 	if(convert_right_stick_directions_to_buttons_button[button]) {
 		convert_right_stick_directions_to_buttons_override = FALSE;
-		if(current_right_stick_distance > convert_right_stick_directions_to_inputs_right_stick_threshold_distance) {
+		if(current_right_stick_distance_sq > convert_right_stick_directions_to_inputs_right_stick_threshold_distance_square) {
 			set_val(convert_right_stick_directions_to_buttons_button[button], convert_right_stick_directions_to_buttons_button_value[button]);
 		}
 	}
