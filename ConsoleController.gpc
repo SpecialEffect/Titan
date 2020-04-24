@@ -183,6 +183,8 @@ main {
 		swap_sticks_on = !swap_sticks_on;
 	}
 		
+	current_left_stick_distance_sq = sq(get_actual(STICK_2_X)) + sq(get_actual(STICK_2_Y));
+	current_right_stick_distance_sq = sq(get_actual(STICK_1_X)) + sq(get_actual(STICK_1_Y));
 	
 	// Re-interpret stick input if appropriate
 	// We have a few possible modifiers:
@@ -190,35 +192,43 @@ main {
 	// convert_left_stick_directions_to_buttons_on: turn left stick into buttons
 	// convert_right_stick_directions_to_buttons_on: turn right stick into buttons	
 	//
-	// Here we also block hold stick functions if not permitted
+		
+	// Work out if stick holds should be permitted
+	if(swap_sticks_on) {
+		if(convert_right_stick_directions_to_buttons_on == FALSE || convert_right_stick_directions_to_buttons_override) {
+			// permit if < threshold for denying
+			hold_left_stick_directions_and_distances_permitted = (current_left_stick_distance_sq <= hold_left_stick_deny_stick_deadzone_radius_squared);
+		}
+		if(convert_right_stick_directions_to_buttons_on && convert_right_stick_directions_to_buttons_override == FALSE) {			
+			hold_left_stick_directions_and_distances_permitted = !FALSE;
+		}
+	}
+	else {
+		if(convert_left_stick_directions_to_buttons_on == FALSE || convert_left_stick_directions_to_buttons_override) {
+			// permit if < threshold for denying
+			hold_left_stick_directions_and_distances_permitted = (current_left_stick_distance_sq <= hold_left_stick_deny_stick_deadzone_radius_squared);
+		}
+		if(convert_left_stick_directions_to_buttons_on && convert_left_stick_directions_to_buttons_override == FALSE) {			
+			hold_left_stick_directions_and_distances_permitted = !FALSE;
+		}
+	}
 	
-	current_left_stick_distance_sq = sq(get_actual(STICK_2_X)) + sq(get_actual(STICK_2_Y));
-	current_right_stick_distance_sq = sq(get_actual(STICK_1_X)) + sq(get_actual(STICK_1_Y));
 	if(swap_sticks_on == FALSE) {
 		set_val(STICK_2_X, get_actual(STICK_2_X));
 		set_val(STICK_2_Y, get_actual(STICK_2_Y));
 		set_val(STICK_1_X, get_actual(STICK_1_X));
 		set_val(STICK_1_Y, get_actual(STICK_1_Y));
-		if(convert_left_stick_directions_to_buttons_on == FALSE || convert_left_stick_directions_to_buttons_override) {
-			// permit if < threshold for denying
-			hold_left_stick_directions_and_distances_permitted = (current_left_stick_distance_sq <= hold_left_stick_deny_stick_deadzone_radius_squared);
-		}
 	}
 	if(swap_sticks_on) {
 		set_val(STICK_2_X, get_actual(STICK_1_X));
 		set_val(STICK_2_Y, get_actual(STICK_1_Y));
 		set_val(STICK_1_X, get_actual(STICK_2_X));
 		set_val(STICK_1_Y, get_actual(STICK_2_Y));
-		if(convert_right_stick_directions_to_buttons_on == FALSE || convert_right_stick_directions_to_buttons_override) {
-			// permit if < threshold for denying
-			hold_left_stick_directions_and_distances_permitted = (current_right_stick_distance_sq <= hold_left_stick_deny_stick_deadzone_radius_squared);
-		}
 	}
 	if(swap_sticks_on == FALSE) {
 		if(convert_left_stick_directions_to_buttons_on && convert_left_stick_directions_to_buttons_override == FALSE) {
 			set_val(STICK_2_X, 0.0);
 			set_val(STICK_2_Y, 0.0);
-			hold_left_stick_directions_and_distances_permitted = !FALSE;
 		}
 		if(convert_right_stick_directions_to_buttons_on && convert_right_stick_directions_to_buttons_override == FALSE) {
 			set_val(STICK_1_X, 0.0);
@@ -237,7 +247,6 @@ main {
 			set_val(STICK_1_Y, get_actual(STICK_2_Y));
 			set_val(STICK_2_X, 0.0);
 			set_val(STICK_2_Y, 0.0);
-			hold_left_stick_directions_and_distances_permitted = !FALSE;
 		}
 	}
 	if(convert_left_stick_directions_to_buttons_on && convert_left_stick_directions_to_buttons_override == FALSE && convert_right_stick_directions_to_buttons_on && convert_right_stick_directions_to_buttons_override == FALSE) {
