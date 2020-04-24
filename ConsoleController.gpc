@@ -185,6 +185,16 @@ main {
 		swap_sticks_on = !swap_sticks_on;
 	}
 		
+	
+	// Re-interpret stick input if appropriate
+	// We have a few possible modifiers:
+	// swap_sticks_on: swap left and right analogue values
+	// toggle_convert_left_stick_directions_to_buttons_on: turn left stick into buttons
+	// toggle_convert_right_stick_directions_to_buttons_on: turn right stick into buttons	
+	//
+	// Here we also block hold stick functions if not permitted
+	
+	
 	current_left_stick_distance = sqrt(sq(get_actual(STICK_2_X)) + sq(get_actual(STICK_2_Y)));
 	current_right_stick_distance = sqrt(sq(get_actual(STICK_1_X)) + sq(get_actual(STICK_1_Y)));
 	if(swap_sticks_on == FALSE) {
