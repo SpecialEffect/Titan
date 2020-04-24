@@ -299,6 +299,7 @@ main {
 	}
 	
 	//Execute Stick Direction Holds
+	// This loop is unrolled for performance reasons
 	if(hold_left_stick_directions_and_distances_permitted) {
 		if(hold_left_stick_directions_and_distances[0]) {
 			HoldLeftStickDirectionsAndDistances(0);
@@ -412,6 +413,7 @@ main {
 	}
 	
 	//Set Input Values
+	// This loop is unrolled for performance reasons
 	if(get_actual(input[0])) {
 		set_val(input[0], button_value[0]);
 	}
@@ -466,6 +468,7 @@ main {
 	
 	//Block Inputs While in Hold, Rapid Fire or Queue Press Combo State
 	if(queue_press_combo_on_state || rapid_fire_on_state || hold_on_state) {
+		// This loop is unrolled for performance reasons
 		set_val(input[0], 0.0);
 		set_val(input[1], 0.0);
 		set_val(input[2], 0.0);
@@ -558,6 +561,7 @@ main {
 	}
 	
 	//Execute Rapid Fire
+	// This loop is unrolled for performance reasons
 	if(rapid_fire[0]) {
 		RapidFire(0);
 	} else comboStop(rapid_fire_press_combo[0]);
@@ -611,6 +615,7 @@ main {
 	} else comboStop(rapid_fire_press_combo[16]);
 
 	//Execute Hold
+	// This loop is unrolled for performance reasons
 	if(hold[0]) {
 		Hold(0);
 	}
