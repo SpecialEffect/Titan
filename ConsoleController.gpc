@@ -65,9 +65,7 @@ bool hold_left_stick_directions_and_distances[8] = {FALSE, FALSE, FALSE, FALSE, 
 
 //Keeps track of the angle and distance of each stick from their neutral positions.
 fix32 current_left_stick_distance_sq = 0.0;
-fix32 current_left_stick_angle = 0.0;
 fix32 current_right_stick_distance_sq = 0.0;
-fix32 current_right_stick_angle = 0.0;
 
 //Determines if any active hold left stick directions are allowed to have an effect.
 bool hold_left_stick_directions_and_distances_permitted = !FALSE;
@@ -327,19 +325,21 @@ main {
 	}
 	
 	if(convert_left_stick_directions_to_buttons_on) {		
-		current_left_stick_angle = atan2(get_actual(STICK_2_X), -get_actual(STICK_2_Y));
-		if(current_left_stick_distance_sq > convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance_square) {
-			if(current_left_stick_angle >= (-PI / 4.0) && current_left_stick_angle < (PI / 4.0)) {
-				ConvertLeftStickDirectionsToButtons(0);
+		
+		if(current_left_stick_distance_sq > convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance_square) {			
+			// Angle can be computed nicely with atan2, but this is more expensive than the naive
+			// comparison of magnitude and sign 
+			if (abs(get_actual(STICK_2_X)) > abs(get_actual(STICK_2_Y))) { // left/right
+				if (get_actual(STICK_2_X) > 0.0)
+					ConvertLeftStickDirectionsToButtons(3);
+				else
+					ConvertLeftStickDirectionsToButtons(2);
 			}
-			if((current_left_stick_angle >= (3.0 * PI / 4.0) || current_left_stick_angle < (-3.0 * PI / 4.0))) {
-				ConvertLeftStickDirectionsToButtons(1);
-			} 
-			if(current_left_stick_angle >= (-3.0 * PI / 4.0) && current_left_stick_angle < (-PI / 4.0)) {
-				ConvertLeftStickDirectionsToButtons(2);
-			}
-			if(current_left_stick_angle >= (PI / 4.0) && current_left_stick_angle < (3.0 * PI / 4.0)) {
-				ConvertLeftStickDirectionsToButtons(3);
+			else { // up/down
+				if (get_actual(STICK_2_Y) > 0.0)
+					ConvertLeftStickDirectionsToButtons(1);
+				else
+					ConvertLeftStickDirectionsToButtons(0);		
 			}
 		}
 		else { //current_left_stick_distance_sq <= convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance
@@ -352,19 +352,20 @@ main {
 	
 	
 	if(toggle_convert_right_stick_directions_to_buttons_on) {
-		current_right_stick_angle = atan2(get_actual(STICK_1_X), -get_actual(STICK_1_Y));
 		if(current_right_stick_distance_sq > convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance_square) {
-			if(current_right_stick_angle >= (-PI / 4.0) && current_right_stick_angle < (PI / 4.0)) {
-				ConvertRightStickDirectionsToButtons(0);
+			// Angle can be computed nicely with atan2, but this is more expensive than the naive
+			// comparison of magnitude and sign 
+			if (abs(get_actual(STICK_1_X)) > abs(get_actual(STICK_1_Y))) { // left/right
+				if (get_actual(STICK_1_X) > 0.0)
+					ConvertRightStickDirectionsToButtons(3);
+				else
+					ConvertRightStickDirectionsToButtons(2);
 			}
-			if(current_right_stick_angle >= (3.0 * PI / 4.0) || current_right_stick_angle < (-3.0 * PI / 4.0)) {
-				ConvertRightStickDirectionsToButtons(1);
-			} 
-			if(current_right_stick_angle >= (-3.0 * PI / 4.0) && current_right_stick_angle < (-PI / 4.0)) {
-				ConvertRightStickDirectionsToButtons(2);
-			}
-			if(current_right_stick_angle >= (PI / 4.0) && current_right_stick_angle < (3.0 * PI / 4.0)) {
-				ConvertRightStickDirectionsToButtons(3);
+			else { // up/down
+				if (get_actual(STICK_1_Y) > 0.0)
+					ConvertRightStickDirectionsToButtons(1);
+				else
+					ConvertRightStickDirectionsToButtons(0);		
 			}
 		}
 		else { // current_right_stick_distance_sq <= convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance
