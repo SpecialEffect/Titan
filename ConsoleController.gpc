@@ -213,48 +213,41 @@ main {
 		}
 	}
 	
-	if(swap_sticks_on == FALSE) {
-		set_val(STICK_2_X, get_actual(STICK_2_X));
-		set_val(STICK_2_Y, get_actual(STICK_2_Y));
-		set_val(STICK_1_X, get_actual(STICK_1_X));
-		set_val(STICK_1_Y, get_actual(STICK_1_Y));
-	}
+	// By default, pass analogue values through, possibly swapped	
 	if(swap_sticks_on) {
 		set_val(STICK_2_X, get_actual(STICK_1_X));
 		set_val(STICK_2_Y, get_actual(STICK_1_Y));
 		set_val(STICK_1_X, get_actual(STICK_2_X));
 		set_val(STICK_1_Y, get_actual(STICK_2_Y));
 	}
-	if(swap_sticks_on == FALSE) {
-		if(convert_left_stick_directions_to_buttons_on && convert_left_stick_directions_to_buttons_override == FALSE) {
-			set_val(STICK_2_X, 0.0);
-			set_val(STICK_2_Y, 0.0);
-		}
-		if(convert_right_stick_directions_to_buttons_on && convert_right_stick_directions_to_buttons_override == FALSE) {
-			set_val(STICK_1_X, 0.0);
-			set_val(STICK_1_Y, 0.0);
-		}
+	else {
+		set_val(STICK_2_X, get_actual(STICK_2_X));
+		set_val(STICK_2_Y, get_actual(STICK_2_Y));
+		set_val(STICK_1_X, get_actual(STICK_1_X));
+		set_val(STICK_1_Y, get_actual(STICK_1_Y));
 	}
-	if(swap_sticks_on) {
-		if(convert_left_stick_directions_to_buttons_on && convert_left_stick_directions_to_buttons_override == FALSE) {
-			set_val(STICK_2_X, get_actual(STICK_1_X));
-			set_val(STICK_2_Y, get_actual(STICK_1_Y));
+	
+	// If we're converting to button switches, zero out again
+	if (convert_left_stick_directions_to_buttons_on && convert_left_stick_directions_to_buttons_override == FALSE) {
+		if (swap_sticks_on) {
 			set_val(STICK_1_X, 0.0);
 			set_val(STICK_1_Y, 0.0);
 		}
-		if(convert_right_stick_directions_to_buttons_on && convert_right_stick_directions_to_buttons_override == FALSE) {
-			set_val(STICK_1_X, get_actual(STICK_2_X));
-			set_val(STICK_1_Y, get_actual(STICK_2_Y));
+		else {
 			set_val(STICK_2_X, 0.0);
 			set_val(STICK_2_Y, 0.0);
 		}
 	}
-	if(convert_left_stick_directions_to_buttons_on && convert_left_stick_directions_to_buttons_override == FALSE && convert_right_stick_directions_to_buttons_on && convert_right_stick_directions_to_buttons_override == FALSE) {
+	if(convert_right_stick_directions_to_buttons_on && convert_right_stick_directions_to_buttons_override == FALSE) {
+		if (swap_sticks_on) {
 			set_val(STICK_2_X, 0.0);
 			set_val(STICK_2_Y, 0.0);
+		}
+		else {
 			set_val(STICK_1_X, 0.0);
 			set_val(STICK_1_Y, 0.0);
-	}
+		}
+	}	
 	
 	//Set Stick Direction Holds
 	if(key_event_active(KEY_W)) {
