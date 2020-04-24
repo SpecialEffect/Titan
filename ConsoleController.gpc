@@ -1,0 +1,1085 @@
+#pragma METAINFO("SpecialEffect", 1, 0, "Console Controller")
+
+#include <keyboard.gph>
+#include "key_events.gph"
+
+//EDITABLE
+
+//Determines if the sticks should be swapped. Default is set to FALSE, set to !FALSE to start with the sticks swapped by default.
+bool swap_sticks_on = FALSE;
+
+//Sets the values for each hold left stick directions and distances distance in the following order: Up, Down, Left, Right, Up Intermediate, Down Intermediate, Left Intermediate, Right Intermediate.
+const fix32 hold_left_stick_directions_and_distances_distance[8] = {-100.0, 100.0, -100.0, 100.0, -60.0, 60.0, -60.0, 60.0};
+
+//Set of buttons that the left stick directions will be converted to if left stick button mode is on. Set any to FALSE to keep the stick values in that direction. Set in the following order: Up, Down, Left, Right. Default is set to face buttons.
+const uint8 convert_left_stick_directions_to_buttons_button[4] = {BUTTON_14, BUTTON_16, BUTTON_17, BUTTON_15};
+
+//Set of values for each of the buttons set to be converted from left stick directions.
+const fix32 convert_left_stick_directions_to_buttons_button_value[4] = {100.0, 100.0, 100.0, 100.0};
+
+//Set of buttons that the right stick directions will be converted to if right stick button mode is on. Set any to FALSE to keep the stick values in that direction. Set in the following order: Up, Down, Left, Right. Default is set to face buttons.
+const uint8 convert_right_stick_directions_to_buttons_button[4] = {BUTTON_14, BUTTON_16, BUTTON_17, BUTTON_15};
+
+//Set of values for each of the buttons set to be converted from right stick directions.
+const fix32 convert_right_stick_directions_to_buttons_button_value[4] = {100.0, 100.0, 100.0, 100.0};
+
+//Distances that set the point at which each stick will be converted into a button from their neutral positions. Default is set to 60.0.
+const fix32 convert_left_stick_directions_to_inputs_left_stick_threshold_distance = 60.0;
+const fix32 convert_right_stick_directions_to_inputs_right_stick_threshold_distance = 60.0;
+
+//The queue press combo press duration is the time in ms for each press when performing a queue press combo, each press duration fluctuates randomly 10ms either side of this value. Default is set to 100ms
+const int16 queue_press_combo_press_duration = 100;
+
+//The queue press combo press delay is the delay in ms after executing a queue press combo for each press to activate and also the delay following a press before exiting the queue press combo. Default is set to 100ms
+const int16 queue_press_combo_press_delay = 100;
+
+//The queue press combo multiple simultaneous input is the time between presses if there are multiple at the same stage in the combo.
+const int16 queue_press_combo_multiple_simultaneous_input_delay = 25;
+
+//The rapid fire press duration is the time in ms between each press when performing a rapid fire, each press duration fluctuates randomly 10ms either side of this value. Default is set to 140ms
+const int16 rapid_fire_press_duration = 140;
+
+//Timers corresponding to the short and long time modifiers for each individual state, fluctuates randomly 10ms either side of the total time modifier for that state.
+const int16 queue_press_combo_short_time_modifier = 200;
+const int16 queue_press_combo_long_time_modifier = 1000;
+const int16 queue_press_combo_hold_short_time_modifier = 500;
+const int16 queue_press_combo_hold_long_time_modifier = 2500;
+const int16 rapid_fire_short_time_modifier = 500;
+const int16 rapid_fire_long_time_modifier = 2500;
+const int16 hold_short_time_modifier = 500;
+const int16 hold_long_time_modifier = 2500;
+
+//Arrays of values for standard button press, queue press combo, rapid fire and hold buttons. Adjustable for analog inputs. Set in the following order BUTTON_16, BUTTON_15, BUTTON_17, BUTTON_14, BUTTON_4, BUTTON_5, BUTTON_6, BUTTON_7, BUTTON_8, BUTTON_9, BUTTON_10, BUTTON_13, BUTTON_11, BUTTON_12, BUTTON_2, BUTTON_3, BUTTON_1.
+const fix32 button_value[17] = {100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0};
+
+//FIXED
+
+//Distance whatever stick is controlling the left stick must travel before denying any hold stick or convert left and right stick directions functions from having an effect.
+const fix32 hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius = 20.0;
+
+//Sets the stick axis for each hold left stick directions and distances.
+const uint8 hold_left_stick_directions_and_distances_axis[8] = {STICK_2_Y, STICK_2_Y, STICK_2_X, STICK_2_X, STICK_2_Y, STICK_2_Y, STICK_2_X, STICK_2_X};
+
+//Keeps track of stick holds.
+bool hold_left_stick_directions_and_distances[8] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+
+//Keeps track of the angle and distance of each stick from their neutral positions.
+fix32 current_left_stick_distance = 0.0;
+fix32 current_left_stick_angle = 0.0;
+fix32 current_right_stick_distance = 0.0;
+fix32 current_right_stick_angle = 0.0;
+
+//Determines if any active hold left stick directions are allowed to have an effect.
+bool hold_left_stick_directions_and_distances_permitted = !FALSE;
+
+//Keeps track of whether or not both convert left and right stick directions to buttons are toggled on.
+bool toggle_convert_left_stick_directions_to_buttons_on = FALSE;
+bool toggle_convert_right_stick_directions_to_buttons_on = FALSE;
+
+//Distance the left and right stick must travel before overriding convert left and right stick directions o buttons if button is false.
+const fix32 convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance = 20.0;
+const fix32 convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance = 20.0;
+
+//Overrides for each convert stick directions to buttons. Used when the buttons are set to false.
+bool convert_left_stick_directions_to_buttons_override = FALSE;
+bool convert_right_stick_directions_to_buttons_override = FALSE;
+
+//Array of inputs functions can be applied to
+const uint8 input[17] = {BUTTON_16, BUTTON_15, BUTTON_17, BUTTON_14, BUTTON_4, BUTTON_5, BUTTON_6, BUTTON_7, BUTTON_8, BUTTON_9, BUTTON_10, BUTTON_13, BUTTON_11, BUTTON_12, BUTTON_2, BUTTON_3, BUTTON_1};
+
+//Keeps track of rapid fires and holds
+bool rapid_fire[17] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+bool hold[17] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+
+//Keeps track of current state
+bool queue_press_combo_on_state = FALSE;
+bool rapid_fire_on_state = FALSE;
+bool hold_on_state = FALSE;
+
+//Array that keeps track of queue press combo inputs
+uint8 queue_press_combo_input[5] = {FALSE, FALSE, FALSE, FALSE, FALSE};
+
+//Array that keeps track of queue press combo input values
+fix32 queue_press_combo_input_value[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+
+//Keeps track of current queue press combo input
+uint8 queue_press_combo_current_input_number = 1;
+
+//Keeps track of whether or not an input was already added at this stage in current queue_press_combo
+bool queue_press_combo_input_added_at_current_stage = FALSE;
+
+//Arrays of rapid fire and queue press combo press combo pointers
+const uint8 *queue_press_combo_press_combo[5] = {&QueuePressComboPressInput1, &QueuePressComboPressInput2, &QueuePressComboPressInput3, &QueuePressComboPressInput4, &QueuePressComboPressInput5};
+const uint8 *rapid_fire_press_combo[17] = {&RapidFirePressInput1, &RapidFirePressInput2, &RapidFirePressInput3, &RapidFirePressInput4, &RapidFirePressInput5, &RapidFirePressInput6, &RapidFirePressInput7, &RapidFirePressInput8, &RapidFirePressInput9, &RapidFirePressInput10, &RapidFirePressInput11, &RapidFirePressInput12, &RapidFirePressInput13, &RapidFirePressInput14, &RapidFirePressInput15, &RapidFirePressInput16, &RapidFirePressInput17};
+
+//Arrays of timings for queue press combo
+int16 queue_press_combo_time_delay[5] = {0, 0, 0, 0, 0};
+int16 queue_press_combo_hold_time[5] = {0, 0, 0, 0, 0};
+
+//Arrays of time modifiers for rapid fire and hold
+int16 rapid_fire_time_modifier[17] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int16 hold_time_modifier[17] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+//Keeps track of queue press combo timings
+int16 queue_press_combo_current_time_delay = 0;
+int16 queue_press_combo_current_hold_time = 0;
+int16 queue_press_combo_current_position_hold_time = 0;
+
+//Keeps track of rapid fire and hold time modifiers
+int16 rapid_fire_current_time_modifier = 0;
+int16 hold_current_time_modifier = 0;
+
+//Keeps track of rapid fire and hold time modifier buffers
+const int16 rapid_fire_time_modifier_buffer = 100;
+const int16 hold_time_modifier_buffer = 100;
+
+//For loops
+uint8 i;
+uint8 j;
+
+init {
+	
+	set_rgb(0.0, 100.0, 0.0);
+
+//Keyboard Mapping
+
+const uint8 map[] = {
+	
+	KEY_X, BUTTON_16,
+	KEY_O, BUTTON_15,
+	KEY_S, BUTTON_17,
+	KEY_T, BUTTON_14,
+	KEY_1, BUTTON_4,
+	KEY_2, BUTTON_5,
+	KEY_3, BUTTON_6,
+	KEY_4, BUTTON_7,
+	KEY_5, BUTTON_8,
+	KEY_6, BUTTON_9,
+	KEY_UPARROW, BUTTON_10,
+	KEY_RIGHTARROW, BUTTON_13,
+	KEY_DOWNARROW, BUTTON_11,
+	KEY_LEFTARROW, BUTTON_12,
+	KEY_P, BUTTON_2,
+	KEY_I, BUTTON_3,
+	KEY_F, BUTTON_1,
+	};
+	keymapping(map);
+	
+}
+
+main {
+	
+	//Exit All States if Console Controller Profile is Called While in This Script
+	if(key_event_active(KEY_K)) {
+		ExitAllStates();
+	}
+	
+	//Switch to Console Controller - Suspend profile	
+	if(key_event_active(KEY_J)) {
+		ExitAllStates();
+		mslot_load(2);
+	}
+	
+	//Swap Sticks and Block Hold Stick Functions If Not Permitted
+	if(key_event_active(KEY_A)) {
+		swap_sticks_on = !swap_sticks_on;
+	}
+		
+	current_left_stick_distance = sqrt(sq(get_actual(STICK_2_X)) + sq(get_actual(STICK_2_Y)));
+	current_right_stick_distance = sqrt(sq(get_actual(STICK_1_X)) + sq(get_actual(STICK_1_Y)));
+	if(swap_sticks_on == FALSE) {
+		set_val(STICK_2_X, get_actual(STICK_2_X));
+		set_val(STICK_2_Y, get_actual(STICK_2_Y));
+		set_val(STICK_1_X, get_actual(STICK_1_X));
+		set_val(STICK_1_Y, get_actual(STICK_1_Y));
+		if(toggle_convert_left_stick_directions_to_buttons_on == FALSE || convert_left_stick_directions_to_buttons_override) {
+			if(current_left_stick_distance > hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius) {
+				hold_left_stick_directions_and_distances_permitted = FALSE;
+			}
+			else if(current_left_stick_distance <= hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius) {
+				hold_left_stick_directions_and_distances_permitted = !FALSE;
+			}
+		}
+	}
+	if(swap_sticks_on) {
+		set_val(STICK_2_X, get_actual(STICK_1_X));
+		set_val(STICK_2_Y, get_actual(STICK_1_Y));
+		set_val(STICK_1_X, get_actual(STICK_2_X));
+		set_val(STICK_1_Y, get_actual(STICK_2_Y));
+		if(toggle_convert_right_stick_directions_to_buttons_on == FALSE || convert_right_stick_directions_to_buttons_override) {
+			if(current_right_stick_distance > hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius) {
+				hold_left_stick_directions_and_distances_permitted = FALSE;
+			}
+			else if(current_right_stick_distance <= hold_left_stick_directions_and_distances_and_convert_left_and_right_stick_directions_to_buttons_deny_stick_deadzone_radius){
+				hold_left_stick_directions_and_distances_permitted = !FALSE;
+			}
+		}
+	}
+	if(swap_sticks_on == FALSE) {
+		if(toggle_convert_left_stick_directions_to_buttons_on && convert_left_stick_directions_to_buttons_override == FALSE) {
+			set_val(STICK_2_X, 0.0);
+			set_val(STICK_2_Y, 0.0);
+			hold_left_stick_directions_and_distances_permitted = !FALSE;
+		}
+		if(toggle_convert_right_stick_directions_to_buttons_on && convert_right_stick_directions_to_buttons_override == FALSE) {
+			set_val(STICK_1_X, 0.0);
+			set_val(STICK_1_Y, 0.0);
+		}
+	}
+	if(swap_sticks_on) {
+		if(toggle_convert_left_stick_directions_to_buttons_on && convert_left_stick_directions_to_buttons_override == FALSE) {
+			set_val(STICK_2_X, get_actual(STICK_1_X));
+			set_val(STICK_2_Y, get_actual(STICK_1_Y));
+			set_val(STICK_1_X, 0.0);
+			set_val(STICK_1_Y, 0.0);
+		}
+		if(toggle_convert_right_stick_directions_to_buttons_on && convert_right_stick_directions_to_buttons_override == FALSE) {
+			set_val(STICK_1_X, get_actual(STICK_2_X));
+			set_val(STICK_1_Y, get_actual(STICK_2_Y));
+			set_val(STICK_2_X, 0.0);
+			set_val(STICK_2_Y, 0.0);
+			hold_left_stick_directions_and_distances_permitted = !FALSE;
+		}
+	}
+	if(toggle_convert_left_stick_directions_to_buttons_on && convert_left_stick_directions_to_buttons_override == FALSE && toggle_convert_right_stick_directions_to_buttons_on && convert_right_stick_directions_to_buttons_override == FALSE) {
+			set_val(STICK_2_X, 0.0);
+			set_val(STICK_2_Y, 0.0);
+			set_val(STICK_1_X, 0.0);
+			set_val(STICK_1_Y, 0.0);
+	}
+	
+	//Set Stick Direction Holds
+	if(key_event_active(KEY_W)) {
+		StickNeutral();
+		hold_left_stick_directions_and_distances[0] = !FALSE;
+	}
+	if(key_event_active(KEY_B)) {
+		StickNeutral();
+		hold_left_stick_directions_and_distances[1] = !FALSE;
+	}
+	if(key_event_active(KEY_G)) {
+		StickNeutral();
+		hold_left_stick_directions_and_distances[2] = !FALSE;
+	}
+	if(key_event_active(KEY_H)) {
+		StickNeutral();
+		hold_left_stick_directions_and_distances[3] = !FALSE;
+	}
+	if(key_event_active(KEY_Y)) {
+		StickNeutral();
+		hold_left_stick_directions_and_distances[4] = !FALSE;
+	}
+	if(key_event_active(KEY_Z)) {
+		StickNeutral();
+		hold_left_stick_directions_and_distances[5] = !FALSE;
+	}
+	if(key_event_active(KEY_C)) {
+		StickNeutral();
+		hold_left_stick_directions_and_distances[6] = !FALSE;
+	}
+	if(key_event_active(KEY_V)) {
+		StickNeutral();
+		hold_left_stick_directions_and_distances[7] = !FALSE;
+	}
+	
+	//Stop All Stick Direction Holds
+	if(key_event_active(KEY_E)) {
+		StickNeutral();
+	}
+	
+	//Execute Stick Direction Holds
+	if(hold_left_stick_directions_and_distances_permitted) {
+		if(hold_left_stick_directions_and_distances[0]) {
+			HoldLeftStickDirectionsAndDistances(0);
+		}
+		if(hold_left_stick_directions_and_distances[1]) {
+			HoldLeftStickDirectionsAndDistances(1);
+		}
+		if(hold_left_stick_directions_and_distances[2]) {
+			HoldLeftStickDirectionsAndDistances(2);
+		}
+		if(hold_left_stick_directions_and_distances[3]) {
+			HoldLeftStickDirectionsAndDistances(3);
+		}
+		if(hold_left_stick_directions_and_distances[4]) {
+			HoldLeftStickDirectionsAndDistances(4);
+		}
+		if(hold_left_stick_directions_and_distances[5]) {
+			HoldLeftStickDirectionsAndDistances(5);
+		}
+		if(hold_left_stick_directions_and_distances[6]) {
+			HoldLeftStickDirectionsAndDistances(6);
+		}
+		if(hold_left_stick_directions_and_distances[7]) {
+			HoldLeftStickDirectionsAndDistances(7);
+		}
+	}
+	
+	//Convert Left Stick Directions To Inputs
+	if(key_event_active(KEY_U)) {
+		toggle_convert_left_stick_directions_to_buttons_on = !toggle_convert_left_stick_directions_to_buttons_on;
+	}
+	
+	if(toggle_convert_left_stick_directions_to_buttons_on) {
+		current_left_stick_angle = atan2(get_actual(STICK_2_X), -get_actual(STICK_2_Y));
+		if(current_left_stick_distance > convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance) {
+			if(current_left_stick_angle >= (-PI / 4.0) && current_left_stick_angle < (PI / 4.0)) {
+				ConvertLeftStickDirectionsToButtons(0);
+			}
+			if((current_left_stick_angle >= (3.0 * PI / 4.0) || current_left_stick_angle < (-3.0 * PI / 4.0))) {
+				ConvertLeftStickDirectionsToButtons(1);
+			} 
+			if(current_left_stick_angle >= (-3.0 * PI / 4.0) && current_left_stick_angle < (-PI / 4.0)) {
+				ConvertLeftStickDirectionsToButtons(2);
+			}
+			if(current_left_stick_angle >= (PI / 4.0) && current_left_stick_angle < (3.0 * PI / 4.0)) {
+				ConvertLeftStickDirectionsToButtons(3);
+			}
+		}
+		if(current_left_stick_distance <= convert_left_stick_directions_to_buttons_left_stick_false_button_threshold_distance) {
+			convert_left_stick_directions_to_buttons_override = FALSE;
+		}
+	}
+	else {
+		convert_left_stick_directions_to_buttons_override = FALSE;
+	}
+	
+	//Convert Right Stick Directions To Inputs
+	if(key_event_active(KEY_D)) {
+		toggle_convert_right_stick_directions_to_buttons_on = !toggle_convert_right_stick_directions_to_buttons_on;
+	}
+	
+	if(toggle_convert_right_stick_directions_to_buttons_on) {
+		current_right_stick_angle = atan2(get_actual(STICK_1_X), -get_actual(STICK_1_Y));
+		if(current_right_stick_distance > convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance) {
+			if(current_right_stick_angle >= (-PI / 4.0) && current_right_stick_angle < (PI / 4.0)) {
+				ConvertRightStickDirectionsToButtons(0);
+			}
+			if(current_right_stick_angle >= (3.0 * PI / 4.0) || current_right_stick_angle < (-3.0 * PI / 4.0)) {
+				ConvertRightStickDirectionsToButtons(1);
+			} 
+			if(current_right_stick_angle >= (-3.0 * PI / 4.0) && current_right_stick_angle < (-PI / 4.0)) {
+				ConvertRightStickDirectionsToButtons(2);
+			}
+			if(current_right_stick_angle >= (PI / 4.0) && current_right_stick_angle < (3.0 * PI / 4.0)) {
+				ConvertRightStickDirectionsToButtons(3);
+			}
+		}
+		if(current_right_stick_distance <= convert_right_stick_directions_to_buttons_right_stick_false_button_threshold_distance) {
+			convert_right_stick_directions_to_buttons_override = FALSE;
+		}
+	}
+	else {
+		convert_right_stick_directions_to_buttons_override = FALSE;
+	}
+	
+	
+	//Enter Queue Press Combo State
+	if(key_event_release(KEY_Q)) {
+		ExitAllStates();
+		queue_press_combo_on_state = !FALSE;
+		queue_press_combo_current_input_number = 1;
+		queue_press_combo_input_added_at_current_stage = FALSE;
+		queue_press_combo_current_time_delay = queue_press_combo_press_delay;
+		queue_press_combo_current_hold_time = queue_press_combo_press_duration;
+		queue_press_combo_current_position_hold_time = 0;
+		StopQueuePressCombos();
+		for(i = 0; i < 5; i++) {
+			queue_press_combo_input[i] = FALSE;
+			queue_press_combo_input_value[i] = 0.0;
+			queue_press_combo_time_delay[i] = 0;
+			queue_press_combo_hold_time[i] = 0;
+		}
+	}
+	
+	//Enter Rapid Fire State
+	if(key_event_release(KEY_R)) {
+		ExitAllStates();
+		rapid_fire_on_state = !FALSE;
+		rapid_fire_current_time_modifier = 0;
+	}
+	
+	//Enter Hold State
+	if(key_event_release(KEY_L)) {
+		ExitAllStates();
+		hold_on_state = !FALSE;
+		hold_current_time_modifier = 0;
+	}
+	
+	//Set Input Values
+	if(get_actual(input[0])) {
+		set_val(input[0], button_value[0]);
+	}
+	if(get_actual(input[1])) {
+		set_val(input[1], button_value[1]);
+	}
+	if(get_actual(input[2])) {
+		set_val(input[2], button_value[2]);
+	}
+	if(get_actual(input[3])) {
+		set_val(input[3], button_value[3]);
+	}
+	if(get_actual(input[4])) {
+		set_val(input[4], button_value[4]);
+	}
+	if(get_actual(input[5])) {
+		set_val(input[5], button_value[5]);
+	}
+	if(get_actual(input[6])) {
+		set_val(input[6], button_value[6]);
+	}
+	if(get_actual(input[7])) {
+		set_val(input[7], button_value[7]);
+	}
+	if(get_actual(input[8])) {
+		set_val(input[8], button_value[8]);
+	}
+	if(get_actual(input[9])) {
+		set_val(input[9], button_value[9]);
+	}
+	if(get_actual(input[10])) {
+		set_val(input[10], button_value[10]);
+	}
+	if(get_actual(input[11])) {
+		set_val(input[11], button_value[11]);
+	}
+	if(get_actual(input[12])) {
+		set_val(input[12], button_value[12]);
+	}
+	if(get_actual(input[13])) {
+		set_val(input[13], button_value[13]);
+	}
+	if(get_actual(input[14])) {
+		set_val(input[14], button_value[14]);
+	}
+	if(get_actual(input[15])) {
+		set_val(input[15], button_value[15]);
+	}
+	if(get_actual(input[16])) {
+		set_val(input[16], button_value[16]);
+	}
+	
+	//Block Inputs While in Hold, Rapid Fire or Queue Press Combo State
+	if(queue_press_combo_on_state || rapid_fire_on_state || hold_on_state) {
+		set_val(input[0], 0.0);
+		set_val(input[1], 0.0);
+		set_val(input[2], 0.0);
+		set_val(input[3], 0.0);
+		set_val(input[4], 0.0);
+		set_val(input[5], 0.0);
+		set_val(input[6], 0.0);
+		set_val(input[7], 0.0);
+		set_val(input[8], 0.0);
+		set_val(input[9], 0.0);
+		set_val(input[10], 0.0);
+		set_val(input[11], 0.0);
+		set_val(input[12], 0.0);
+		set_val(input[13], 0.0);
+		set_val(input[14], 0.0);
+		set_val(input[15], 0.0);
+		set_val(input[16], 0.0);
+	}
+	
+	//State Check Input Detection
+	if(event_release(input[0])) {
+		StateCheckInputDetection(0);
+	}
+	if(event_release(input[1])) {
+		StateCheckInputDetection(1);
+	}
+	if(event_release(input[2])) {
+		StateCheckInputDetection(2);
+	}
+	if(event_release(input[3])) {
+		StateCheckInputDetection(3);
+	}
+	if(event_release(input[4])) {
+		StateCheckInputDetection(4);
+	}
+	if(event_release(input[5])) {
+		StateCheckInputDetection(5);
+	}
+	if(event_release(input[6])) {
+		StateCheckInputDetection(6);
+	}
+	if(event_release(input[7])) {
+		StateCheckInputDetection(7);
+	}
+	if(event_release(input[8])) {
+		StateCheckInputDetection(8);
+	}
+	if(event_release(input[9])) {
+		StateCheckInputDetection(9);
+	}
+	if(event_release(input[10])) {
+		StateCheckInputDetection(10);
+	}
+	if(event_release(input[11])) {
+		StateCheckInputDetection(11);
+	}
+	if(event_release(input[12])) {
+		StateCheckInputDetection(12);
+	}
+	if(event_release(input[13])) {
+		StateCheckInputDetection(13);
+	}
+	if(event_release(input[14])) {
+		StateCheckInputDetection(14);
+	}
+	if(event_release(input[15])) {
+		StateCheckInputDetection(15);
+	}
+	if(event_release(input[16])) {
+		StateCheckInputDetection(16);
+	}
+	
+	//Execute Queue Press Combo
+	if(key_event_active(KEY_N)) {
+		ExitAllStates();
+		StopQueuePressCombos();
+		for(i = 0; i < 17; i++) {
+			for(j = 0; j < 5; j++) {
+				if(queue_press_combo_input[j] == input[i]) {
+					rapid_fire[i] = FALSE;
+					hold[i] = FALSE;
+				}
+			}
+		}
+		for(i = 0; i < 5; i++) {
+			if(queue_press_combo_input[i] != FALSE) {
+				comboRun(queue_press_combo_press_combo[i]);
+			}
+		}
+	}
+	
+	//Execute Rapid Fire
+	if(rapid_fire[0]) {
+		RapidFire(0);
+	} else comboStop(rapid_fire_press_combo[0]);
+	if(rapid_fire[1]) {
+		RapidFire(1);
+	} else comboStop(rapid_fire_press_combo[1]);
+	if(rapid_fire[2]) {
+		RapidFire(2);
+	} else comboStop(rapid_fire_press_combo[2]);
+	if(rapid_fire[3]) {
+		RapidFire(3);
+	} else comboStop(rapid_fire_press_combo[3]);
+	if(rapid_fire[4]) {
+		RapidFire(4);
+	} else comboStop(rapid_fire_press_combo[4]);
+	if(rapid_fire[5]) {
+		RapidFire(5);
+	} else comboStop(rapid_fire_press_combo[5]);
+	if(rapid_fire[6]) {
+		RapidFire(6);
+	} else comboStop(rapid_fire_press_combo[6]);
+	if(rapid_fire[7]) {
+		RapidFire(7);
+	} else comboStop(rapid_fire_press_combo[7]);
+	if(rapid_fire[8]) {
+		RapidFire(8);
+	} else comboStop(rapid_fire_press_combo[8]);
+	if(rapid_fire[9]) {
+		RapidFire(9);
+	} else comboStop(rapid_fire_press_combo[9]);
+	if(rapid_fire[10]) {
+		RapidFire(10);
+	} else comboStop(rapid_fire_press_combo[10]);
+	if(rapid_fire[11]) {
+		RapidFire(11);
+	} else comboStop(rapid_fire_press_combo[11]);
+	if(rapid_fire[12]) {
+		RapidFire(12);
+	} else comboStop(rapid_fire_press_combo[12]);
+	if(rapid_fire[13]) {
+		RapidFire(13);
+	} else comboStop(rapid_fire_press_combo[13]);
+	if(rapid_fire[14]) {
+		RapidFire(14);
+	} else comboStop(rapid_fire_press_combo[14]);
+	if(rapid_fire[15]) {
+		RapidFire(15);
+	} else comboStop(rapid_fire_press_combo[15]);
+	if(rapid_fire[16]) {
+		RapidFire(16);
+	} else comboStop(rapid_fire_press_combo[16]);
+
+	//Execute Hold
+	if(hold[0]) {
+		Hold(0);
+	}
+	if(hold[1]) {
+		Hold(1);
+	}
+	if(hold[2]) {
+		Hold(2);
+	}
+	if(hold[3]) {
+		Hold(3);
+	}
+	if(hold[4]) {
+		Hold(4);
+	}
+	if(hold[5]) {
+		Hold(5);
+	}
+	if(hold[6]) {
+		Hold(6);
+	}
+	if(hold[7]) {
+		Hold(7);
+	}
+	if(hold[8]) {
+		Hold(8);
+	}
+	if(hold[9]) {
+		Hold(9);
+	}
+	if(hold[10]) {
+		Hold(10);
+	}
+	if(hold[11]) {
+		Hold(11);
+	}
+	if(hold[12]) {
+		Hold(12);
+	}
+	if(hold[13]) {
+		Hold(13);
+	}
+	if(hold[14]) {
+		Hold(14);
+	}
+	if(hold[15]) {
+		Hold(15);
+	}
+	if(hold[16]) {
+		Hold(16);
+	}
+	
+	//State Check Short Time Detection
+	if(key_event_active(KEY_HYPHEN)) {
+		StateCheckShortTimeModifierDetection();
+	}
+	
+	//State Check Long Time Detection
+	if(key_event_active(KEY_EQUALSIGN)) {
+		StateCheckLongTimeModifierDetection();
+	}
+	
+	//State Check Hold Short Time Detection
+	if(key_event_active(KEY_8)) {
+		StateCheckHoldShortTimeModifierDetection();
+	}
+	
+	//State Check Hold Long Time Detection
+	if(key_event_active(KEY_9)) {
+		StateCheckHoldLongTimeModifierDetection();
+	}
+	
+	//Stop All Holds and Rapid Fires
+	if(key_event_active(KEY_M)) {
+		if(queue_press_combo_on_state == FALSE && rapid_fire_on_state == FALSE && hold_on_state == FALSE) {
+			for(i = 0; i < 17; i++) {
+				rapid_fire[i] = FALSE;
+				hold[i] = FALSE;
+			}
+		}
+		ExitAllStates();
+	}
+}
+
+//Set Stick to Neutral Position Function
+void StickNeutral() {
+	for(i = 0; i < 8; i++) {
+		hold_left_stick_directions_and_distances[i] = FALSE;
+	}
+}
+
+//Function That Holds Left Stick Directions and Distances
+void HoldLeftStickDirectionsAndDistances(int direction_and_distance) {
+	set_val(hold_left_stick_directions_and_distances_axis[direction_and_distance], hold_left_stick_directions_and_distances_distance[direction_and_distance]);
+}
+
+// Function That Exits All States
+void ExitAllStates() {
+	queue_press_combo_on_state = FALSE;
+	rapid_fire_on_state = FALSE;
+	hold_on_state = FALSE;
+}
+
+//Function That Converts Left Stick Directions To Inputs
+void ConvertLeftStickDirectionsToButtons(int button) {
+	if(convert_left_stick_directions_to_buttons_button[button] == FALSE) {
+		convert_left_stick_directions_to_buttons_override = !FALSE;
+	}
+	if(convert_left_stick_directions_to_buttons_button[button]) {
+		convert_left_stick_directions_to_buttons_override = FALSE;
+		if(current_left_stick_distance > convert_left_stick_directions_to_inputs_left_stick_threshold_distance) {
+			set_val(convert_left_stick_directions_to_buttons_button[button], convert_left_stick_directions_to_buttons_button_value[button]);
+		}
+	}
+}
+
+//Function That Converts Right Stick Directions To Inputs
+void ConvertRightStickDirectionsToButtons(int button) {
+	if(convert_right_stick_directions_to_buttons_button[button] == FALSE) {
+		convert_right_stick_directions_to_buttons_override = !FALSE;
+	}
+	if(convert_right_stick_directions_to_buttons_button[button]) {
+		convert_right_stick_directions_to_buttons_override = FALSE;
+		if(current_right_stick_distance > convert_right_stick_directions_to_inputs_right_stick_threshold_distance) {
+			set_val(convert_right_stick_directions_to_buttons_button[button], convert_right_stick_directions_to_buttons_button_value[button]);
+		}
+	}
+}
+
+//State Check Input Detection Function
+void StateCheckInputDetection(int current_input) {
+	if(queue_press_combo_on_state) {
+		for(i = 0; i < 5; i++) {
+			if(queue_press_combo_current_input_number == i + 1) {
+				queue_press_combo_input[i] = input[current_input];
+				queue_press_combo_input_value[i] = button_value[current_input];
+				if(queue_press_combo_current_hold_time > queue_press_combo_press_duration) {
+					queue_press_combo_current_hold_time = queue_press_combo_current_hold_time - queue_press_combo_press_duration;
+				}
+				if(queue_press_combo_current_hold_time > queue_press_combo_current_position_hold_time) {
+					queue_press_combo_current_position_hold_time = queue_press_combo_current_hold_time;
+				}
+				if(queue_press_combo_input_added_at_current_stage) {
+					queue_press_combo_current_time_delay = queue_press_combo_current_time_delay + queue_press_combo_multiple_simultaneous_input_delay;
+				}
+				queue_press_combo_input_added_at_current_stage = !FALSE;
+				queue_press_combo_time_delay[i] = queue_press_combo_current_time_delay;
+				queue_press_combo_hold_time[i] = queue_press_combo_current_hold_time;
+				queue_press_combo_current_hold_time = queue_press_combo_press_duration;
+				queue_press_combo_current_input_number += 1;
+				break;
+			}		
+		}
+		return;
+	}
+	if(rapid_fire_on_state) {
+		StopConflictingQueuePressCombos(current_input);
+		if(rapid_fire_current_time_modifier > 0) {
+			rapid_fire_time_modifier[current_input] = (((rapid_fire_current_time_modifier + rapid_fire_time_modifier_buffer) - 5) + (uint16)(rand()*10.0));
+		}
+		if (rapid_fire_current_time_modifier == 0) {
+			rapid_fire_time_modifier[current_input] = rapid_fire_current_time_modifier;
+		}
+		hold[current_input] = FALSE;
+		rapid_fire[current_input] = !rapid_fire[current_input];
+		rapid_fire_on_state = FALSE;
+		return;
+	}
+	if(hold_on_state) {
+		StopConflictingQueuePressCombos(current_input);
+		if(hold_current_time_modifier > 0) {
+			hold_time_modifier[current_input] = (((hold_current_time_modifier + hold_time_modifier_buffer - 5)) + (uint16)(rand()*10.0));
+		}
+		if(hold_current_time_modifier == 0) {
+			hold_time_modifier[current_input] = hold_current_time_modifier;
+		}
+		rapid_fire[current_input] = FALSE;
+		hold[current_input] = !hold[current_input];
+		hold_on_state = FALSE;
+		return;
+	}
+	if(rapid_fire[current_input]) {
+		rapid_fire[current_input] = FALSE;
+	}
+	if(hold[current_input]) {
+		hold[current_input] = FALSE;
+	}
+}
+
+//Stop All Queue Press Combos Function
+void StopQueuePressCombos() {
+	for(i = 0; i < 5; i++) {
+		if(queue_press_combo_press_combo[i]) {
+			comboStop(queue_press_combo_press_combo[i]);
+		}
+	}
+}
+
+//Stop Conflicting Queue Press Combos
+void StopConflictingQueuePressCombos(int currently_inspected_input) {
+	for(i = 0; i < 5; i++) {
+		if(queue_press_combo_input[i] == input[currently_inspected_input]) {
+			if(queue_press_combo_press_combo[i]) {
+				comboStop(queue_press_combo_press_combo[i]);
+			}
+		}
+	}
+}
+
+//Execute Rapid Fire Function
+void RapidFire(int rapid_fire_input) {
+	comboRun(rapid_fire_press_combo[rapid_fire_input]);
+	if((rapid_fire_time_modifier[rapid_fire_input]) > rapid_fire_time_modifier_buffer) {
+		rapid_fire_time_modifier[rapid_fire_input] -= elapsed_time();
+	}
+	else if((rapid_fire_time_modifier[rapid_fire_input]) > 0) {
+		rapid_fire[rapid_fire_input] = FALSE;
+	} 
+}
+
+//Execute Hold Function
+void Hold(int hold_input) {
+	set_val(input[hold_input], button_value[hold_input]);
+	if((hold_time_modifier[hold_input]) > hold_time_modifier_buffer) {
+		hold_time_modifier[hold_input] -= elapsed_time();
+	}
+	else if((hold_time_modifier[hold_input]) > 0) {
+		hold[hold_input] = FALSE;
+	}
+}
+
+//State Check Short Time Modifier Detection Function
+void StateCheckShortTimeModifierDetection() {
+	if(queue_press_combo_on_state) {
+		queue_press_combo_current_hold_time = queue_press_combo_press_duration;
+		queue_press_combo_current_time_delay = queue_press_combo_current_time_delay + queue_press_combo_short_time_modifier + queue_press_combo_current_position_hold_time;
+		queue_press_combo_current_position_hold_time = 0;
+		queue_press_combo_input_added_at_current_stage = FALSE;
+	}
+	if(rapid_fire_on_state) {
+		rapid_fire_current_time_modifier = rapid_fire_current_time_modifier + rapid_fire_short_time_modifier;
+	}
+	if(hold_on_state) {
+		hold_current_time_modifier = hold_current_time_modifier + hold_short_time_modifier;
+	}
+}
+
+//State Check Long Time Modifier Detection Function
+void StateCheckLongTimeModifierDetection() {
+	if(queue_press_combo_on_state) {
+		queue_press_combo_current_hold_time = queue_press_combo_press_duration;
+		queue_press_combo_current_time_delay = queue_press_combo_current_time_delay + queue_press_combo_long_time_modifier + queue_press_combo_current_position_hold_time;
+		queue_press_combo_current_position_hold_time = 0;
+		queue_press_combo_input_added_at_current_stage = FALSE;
+	}
+	if(rapid_fire_on_state) {
+		rapid_fire_current_time_modifier = rapid_fire_current_time_modifier + rapid_fire_long_time_modifier;
+	}
+	if(hold_on_state) {
+		hold_current_time_modifier = hold_current_time_modifier + hold_long_time_modifier;
+	}
+}
+
+//State Check Hold Short Time Modifier Detection Function
+void StateCheckHoldShortTimeModifierDetection() {
+	if(queue_press_combo_on_state) {
+		queue_press_combo_current_hold_time = queue_press_combo_current_hold_time + queue_press_combo_hold_short_time_modifier;
+	}
+}
+
+//State Check Hold Long Time Modifier Detection Function
+void StateCheckHoldLongTimeModifierDetection() {
+	if(queue_press_combo_on_state) {
+		queue_press_combo_current_hold_time = queue_press_combo_current_hold_time + queue_press_combo_hold_long_time_modifier;
+	}
+}
+
+//Queue Press Combo Input Combos
+combo QueuePressComboPressInput1 {
+	set_val(queue_press_combo_input[0], 0.0);
+	wait(0);
+	wait((queue_press_combo_time_delay[0] - 5) + (uint16)(rand()*10.0));
+	set_val(queue_press_combo_input[0], queue_press_combo_input_value[0]);
+	wait((queue_press_combo_hold_time[0] - 5) + (uint16)(rand()*10.0));
+	set_val(queue_press_combo_input[0], 0.0);
+	wait(0);
+	wait(queue_press_combo_press_delay);
+}
+combo QueuePressComboPressInput2 {
+	set_val(queue_press_combo_input[1], 0.0);
+	wait(0);
+	wait((queue_press_combo_time_delay[1] - 5) + (uint16)(rand()*10.0));
+	set_val(queue_press_combo_input[1], queue_press_combo_input_value[1]);
+	wait((queue_press_combo_hold_time[1] - 5) + (uint16)(rand()*10.0));
+	set_val(queue_press_combo_input[1], 0.0);
+	wait(0);
+	wait(queue_press_combo_press_delay);
+}
+combo QueuePressComboPressInput3 {
+	set_val(queue_press_combo_input[2], 0.0);
+	wait(0);
+	wait((queue_press_combo_time_delay[2] - 5) + (uint16)(rand()*10.0));
+	set_val(queue_press_combo_input[2], queue_press_combo_input_value[2]);
+	wait((queue_press_combo_hold_time[2] - 5) + (uint16)(rand()*10.0));
+	set_val(queue_press_combo_input[2], 0.0);
+	wait(0);
+	wait(queue_press_combo_press_delay);
+}
+combo QueuePressComboPressInput4 {
+	set_val(queue_press_combo_input[3], 0.0);
+	wait(0);
+	wait((queue_press_combo_time_delay[3] - 5) + (uint16)(rand()*10.0));
+	set_val(queue_press_combo_input[3], queue_press_combo_input_value[3]);
+	wait((queue_press_combo_hold_time[3] - 5) + (uint16)(rand()*10.0));
+	set_val(queue_press_combo_input[3], 0.0);
+	wait(0);
+	wait(queue_press_combo_press_delay);
+}
+combo QueuePressComboPressInput5 {
+	set_val(queue_press_combo_input[4], 0.0);
+	wait(0);
+	wait((queue_press_combo_time_delay[4] - 5) + (uint16)(rand()*10.0));
+	set_val(queue_press_combo_input[4], queue_press_combo_input_value[4]);
+	wait((queue_press_combo_hold_time[4] - 5) + (uint16)(rand()*10.0));
+	set_val(queue_press_combo_input[4], 0.0);
+	wait(0);
+	wait(queue_press_combo_press_delay);
+}
+
+//Rapid Fire Combos
+combo RapidFirePressInput1 {
+	set_val(input[0], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[0], button_value[0]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput2 {
+	set_val(input[1], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[1], button_value[1]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput3 {
+	set_val(input[2], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[2], button_value[2]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput4 {
+	set_val(input[3], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[3], button_value[3]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput5 {
+	set_val(input[4], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[4], button_value[4]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput6 {
+	set_val(input[5], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[5], button_value[5]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput7 {
+	set_val(input[6], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[6], button_value[6]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput8 {
+	set_val(input[7], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[7], button_value[7]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput9 {
+	set_val(input[8], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[8], button_value[8]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput10 {
+	set_val(input[9], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[9], button_value[9]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput11 {
+	set_val(input[10], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[10], button_value[10]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput12 {
+	set_val(input[11], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[11], button_value[11]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput13 {
+	set_val(input[12], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[12], button_value[12]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput14 {
+	set_val(input[13], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[13], button_value[13]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput15 {
+	set_val(input[14], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[14], button_value[14]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput16 {
+	set_val(input[15], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[15], button_value[15]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+combo RapidFirePressInput17 {
+	set_val(input[16], 0.0);
+	wait(0);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+	set_val(input[16], button_value[16]);
+	wait(((rapid_fire_press_duration / 2) - 5) + (uint16)(rand()*10.0));
+}
+
+void comboRun(uint8 *c) {
+    c[0] = 1;
+}
+ 
+void comboPause(uint8 *c) {
+    c[0] = 0;
+}
+ 
+void comboStop(uint8 *c) {
+    c[0] = 0;
+    c[1] = 0;
+    c[2] = 0;
+    c[3] = 0;
+}
+ 
+void comboReset(uint8 *c) {
+    comboStop(c);
+    comboRun(c);
+}
+
+void set_rgb(fix32 r, fix32 g, fix32 b) {
+    led_set(LED_1, b, 0);
+    led_set(LED_2, r, 0);
+    led_set(LED_3, g, 0);
+    led_set(LED_4, 0.0, 0);
+}
+	

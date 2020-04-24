@@ -1,0 +1,270 @@
+/* 
+  General Usage Template:
+
+#include <keyboard.gph>
+#include "key_events.gph"
+
+main{
+
+  if (key_event_active(KEY_SPACEBAR)){
+    printf("Spacebar active");
+  }
+
+  if (key_event_release(KEY_SPACEBAR)){
+    printf("Spacebar released");
+  }
+
+}
+
+*/
+
+#if defined(ALL_KEYS)         /*^ ALL_KEYS */
+/* 
+  ALL_KEYS Usage Template:
+
+#include <keyboard.gph>
+#define ALL_KEYS
+#include "key_events.gph"
+
+*/
+
+const uint8 key_list[] = {
+  0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10,0x11,0x12,0x13,
+  0x14,0x15,0x16,0x17,0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,0x20,0x21,0x22,0x23,
+  0x24,0x25,0x26,0x27,0x28,0x29,0x2A,0x2B,0x2C,0x2D,0x2E,0x2F,0x30,0x31,0x32,0x33,
+  0x34,0x35,0x36,0x37,0x38,0x39,0x3A,0x3B,0x3C,0x3D,0x3E,0x3F,0x40,0x41,0x42,0x43,
+  0x44,0x45,0x46,0x47,0x48,0x49,0x4A,0x4B,0x4C,0x4D,0x4E,0x4F,0x50,0x51,0x52,0x53,
+  0x54,0x55,0x56,0x57,0x58,0x59,0x5A,0x5B,0x5C,0x5D,0x5E,0x5F,0x60,0x61,0x62,0x63,
+  0x64,0x65,0x66,0x67,0x68,0x69,0x6A,0x6B,0x6C,0x6D,0x6E,0x6F,0x70,0x71,0x72,0x73,
+  0x74,0x75,0x76,0x77,0x78,0x79,0x7A,0x7B,0x7C,0x7D,0x7E,0x7F,0x80,0x81,0x82,0x83,
+  0x84,0x85,0x86,0x87,0x88,0x89,0x8A,0x8B,0x8C,0x8D,0x8E,0x8F,0x90,0x91,0x92,0x93,
+  0x94,0x95,0x96,0x97,0x98,0x99,0x9A,0x9B,0x9C,0x9D,0x9E,0x9F,0xA0,0xA1,0xA2,0xA3,
+  0xA4,0xE0,0xE1,0xE2,0xE3,0xE4,0xE5,0xE6,0xE7,};
+#undef NUMPAD_ONLY
+#undef KEY_EVENTS_LIST  
+#define DEFAULT 1  
+#endif
+#if defined(NUMPAD_ONLY)      /*^ NUMPAD_ONLY */
+/* 
+  NUMPAD_ONLY Usage Template:
+
+#include <keyboard.gph>
+
+#define NUMPAD_ONLY
+#include "key_events.gph"
+
+*/
+
+const uint8 key_list[17]={ /*^ */
+  /*  KEY_PADNUMLOCK		      */ 0x53,  /*  Keypad NumLock or Clear  */
+  /*  KEY_PADSLASH			      */ 0x54,  /*  Keypad /  */
+  /*  KEY_PADASTERISK		      */ 0x55,  /*  Keypad *  */
+  /*  KEY_PADHYPHEN			      */ 0x56,  /*  Keypad -  */
+  /*  KEY_PADPLUS			        */ 0x57,  /*  Keypad +  */
+  /*  KEY_PADPERIOD			      */ 0x63,  /*  Keypad . or Delete  */
+  /*  KEY_PAD1				        */ 0x59,  /*  Keypad 1 or End  */
+  /*  KEY_PAD2				        */ 0x5A,  /*  Keypad 2 or Down Arrow  */
+  /*  KEY_PAD3				        */ 0x5B,  /*  Keypad 3 or Page Down  */
+  /*  KEY_PAD4				        */ 0x5C,  /*  Keypad 4 or Left Arrow  */
+  /*  KEY_PAD5				        */ 0x5D,  /*  Keypad 5  */
+  /*  KEY_PAD6				        */ 0x5E,  /*  Keypad 6 or Right Arrow  */
+  /*  KEY_PAD7				        */ 0x5F,  /*  Keypad 7 or Home  */
+  /*  KEY_PAD8				        */ 0x60,  /*  Keypad 8 or Up Arrow  */
+  /*  KEY_PAD9				        */ 0x61,  /*  Keypad 9 or Page Up  */
+  /*  KEY_PAD0				        */ 0x62,  /*  Keypad 0 or Insert  */
+  /*  KEY_PADENTER			      */ 0x58,  /*  Keypad Enter  */
+};
+#undef KEY_EVENTS_LIST
+#define DEFAULT 1 
+#endif
+#if defined(KEY_EVENTS_LIST)  /*^ KEY_EVENTS_LIST */
+/* 
+  KEY_EVENTS_LIST Usage Template:
+
+#include <keyboard.gph>
+
+#define KEY_EVENTS_LIST custom_key_list
+const uint8 custom_key_list[] = {
+  KEY_W,
+  KEY_A,
+  KEY_S,
+  KEY_D,
+  KEY_R,
+  KEY_ESCAPE,
+  KEY_TAB,
+  KEY_LEFTSHIFT,
+  KEY_SPACEBAR,
+};
+#include "key_events.gph"
+
+main {
+  if(key_event_active(KEY_W)) printf("Key Active: KEY_W");
+  if(key_event_active(KEY_A)) printf("Key Active: KEY_A");
+  if(key_event_active(KEY_S)) printf("Key Active: KEY_S");
+  if(key_event_active(KEY_D)) printf("Key Active: KEY_D");
+  if(key_event_active(KEY_R)) printf("Key Active: KEY_R");
+  if(key_event_active(KEY_ESCAPE)) printf("Key Active: KEY_ESCAPE");
+  if(key_event_active(KEY_TAB)) printf("Key Active: KEY_TAB");
+  if(key_event_active(KEY_LEFTSHIFT)) printf("Key Active: KEY_LEFTSHIFT");
+  if(key_event_active(KEY_SPACEBAR)) printf("Key Active: KEY_SPACEBAR");
+}
+*/
+
+#define key_list KEY_EVENTS_LIST
+#define DEFAULT 1
+#endif
+#if !DEFAULT                  /*^ DEFAULT */
+const uint8 key_list[103]={
+  /*  KEY_GRAVEACCENTANDTILDE */ 0x35,  /*  ` or ~  */
+  /*  KEY_1					          */ 0x1E,  /*  1 or !  */
+  /*  KEY_2					          */ 0x1F,  /*  2 or @  */
+  /*  KEY_3					          */ 0x20,  /*  3 or #  */
+  /*  KEY_4					          */ 0x21,  /*  4 or $  */
+  /*  KEY_5					          */ 0x22,  /*  5 or %  */
+  /*  KEY_6					          */ 0x23,  /*  6 or ^  */
+  /*  KEY_7					          */ 0x24,  /*  7 or &  */
+  /*  KEY_8					          */ 0x25,  /*  8 or *  */
+  /*  KEY_9					          */ 0x26,  /*  9 or (  */
+  /*  KEY_0					          */ 0x27,  /*  0 or )  */
+  /*  KEY_HYPHEN			        */ 0x2D,  /*  - or _  */
+  /*  KEY_EQUALSIGN		        */ 0x2E,  /*  = or +  */
+  /*  KEY_BACKSPACE			      */ 0x2A,  /*  Delete (Backspace)  */
+  /*  KEY_A					          */ 0x04,  /*  a or A  */
+  /*  KEY_B					          */ 0x05,  /*  b or B  */
+  /*  KEY_C					          */ 0x06,  /*  c or C  */
+  /*  KEY_D					          */ 0x07,  /*  d or D  */
+  /*  KEY_E					          */ 0x08,  /*  e or E  */
+  /*  KEY_F					          */ 0x09,  /*  f or F  */
+  /*  KEY_G					          */ 0x0A,  /*  g or G  */
+  /*  KEY_H					          */ 0x0B,  /*  h or H  */
+  /*  KEY_I					          */ 0x0C,  /*  i or I  */
+  /*  KEY_J					          */ 0x0D,  /*  j or J  */
+  /*  KEY_K					          */ 0x0E,  /*  k or K  */
+  /*  KEY_L					          */ 0x0F,  /*  l or L  */
+  /*  KEY_M					          */ 0x10,  /*  m or M  */
+  /*  KEY_N					          */ 0x11,  /*  n or N  */
+  /*  KEY_O					          */ 0x12,  /*  o or O  */
+  /*  KEY_P					          */ 0x13,  /*  p or P  */
+  /*  KEY_Q					          */ 0x14,  /*  q or Q  */
+  /*  KEY_R					          */ 0x15,  /*  r or R  */
+  /*  KEY_S					          */ 0x16,  /*  s or S  */
+  /*  KEY_T					          */ 0x17,  /*  t or T  */
+  /*  KEY_U					          */ 0x18,  /*  u or U  */
+  /*  KEY_V					          */ 0x19,  /*  v or V  */
+  /*  KEY_W					          */ 0x1A,  /*  w or W  */
+  /*  KEY_X					          */ 0x1B,  /*  x or X  */
+  /*  KEY_Y					          */ 0x1C,  /*  y or Y  */
+  /*  KEY_Z					          */ 0x1D,  /*  z or Z  */
+  /*  KEY_SPACEBAR			      */ 0x2C,  /*  Spacebar  */
+  /*  KEY_ENTER				        */ 0x28,  /*  Return (Enter)  */
+  /*  KEY_TAB				          */ 0x2B,  /*  Tab  */
+  /*  KEY_CAPSLOCK			      */ 0x39,  /*  Caps Lock  */
+  /*  KEY_LEFTCONTROL		      */ 0xE0,  /*  Left Control  */
+  /*  KEY_LEFTSHIFT			      */ 0xE1,  /*  Left Shift  */
+  /*  KEY_LEFTALT			        */ 0xE2,  /*  Left Alt  */
+  /*  KEY_LEFTGUI			        */ 0xE3,  /*  Left GUI  */
+  /*  KEY_RIGHTSHIFT		      */ 0xE5,  /*  Right Shift  */
+  /*  KEY_RIGHTALT			      */ 0xE6,  /*  Right Alt  */
+  /*  KEY_APPLICATION		      */ 0x65,  /*  Application  */
+  /*  KEY_RIGHTCONTROL		    */ 0xE4,  /*  Right Control  */
+  /*  KEY_OPENBRACKET		      */ 0x2F,  /*  [ or {  */
+  /*  KEY_CLOSEBRACKET		    */ 0x30,  /*  ] or }  */
+  /*  KEY_SLASH				        */ 0x38,  /*  / or ?  */
+  /*  KEY_BACKSLASH		      	*/ 0x31,  /*  \ or |  */
+  /*  KEY_SEMICOLON			      */ 0x33,  /*  ; or :  */
+  /*  KEY_QUOTE				        */ 0x34,  /*  ' or "  */
+  /*  KEY_COMMA				        */ 0x36,  /*  , or <  */
+  /*  KEY_PERIOD			        */ 0x37,  /*  . or >  */
+  /*  KEY_ESCAPE			        */ 0x29,  /*  Escape  */
+  /*  KEY_F1				          */ 0x3A,  /*  F1  */
+  /*  KEY_F2				          */ 0x3B,  /*  F2  */
+  /*  KEY_F3				          */ 0x3C,  /*  F3  */
+  /*  KEY_F4				          */ 0x3D,  /*  F4  */
+  /*  KEY_F5				          */ 0x3E,  /*  F5  */
+  /*  KEY_F6				          */ 0x3F,  /*  F6  */
+  /*  KEY_F7				          */ 0x40,  /*  F7  */
+  /*  KEY_F8				          */ 0x41,  /*  F8  */
+  /*  KEY_F9				          */ 0x42,  /*  F9  */
+  /*  KEY_F10				          */ 0x43,  /*  F10  */
+  /*  KEY_F11				          */ 0x44,  /*  F11  */
+  /*  KEY_F12				          */ 0x45,  /*  F12  */
+  /*  KEY_PRINTSCREEN		      */ 0x46,  /*  Print Screen  */
+  /*  KEY_SCROLLLOCK		      */ 0x47,  /*  Scroll Lock  */
+  /*  KEY_PAUSE				        */ 0x48,  /*  Pause  */
+  /*  KEY_INSERT			        */ 0x49,  /*  Insert  */
+  /*  KEY_HOME				        */ 0x4A,  /*  Home  */
+  /*  KEY_PAGEUP			        */ 0x4B,  /*  Page Up  */
+  /*  KEY_PAGEDOWN			      */ 0x4E,  /*  Page Down  */
+  /*  KEY_DELETEFORWARD		    */ 0x4C,  /*  Del (Delete Forward)  */
+  /*  KEY_END				          */ 0x4D,  /*  End  */
+  /*  KEY_UPARROW			        */ 0x52,  /*  Up Arrow  */
+  /*  KEY_DOWNARROW			      */ 0x51,  /*  Down Arrow  */
+  /*  KEY_LEFTARROW			      */ 0x50,  /*  Left Arrow  */
+  /*  KEY_RIGHTARROW		      */ 0x4F,  /*  Right Arrow  */
+  /*  KEY_PADNUMLOCK		      */ 0x53,  /*  Keypad NumLock or Clear  */
+  /*  KEY_PADSLASH			      */ 0x54,  /*  Keypad /  */
+  /*  KEY_PADASTERISK		      */ 0x55,  /*  Keypad *  */
+  /*  KEY_PADHYPHEN			      */ 0x56,  /*  Keypad -  */
+  /*  KEY_PADPLUS			        */ 0x57,  /*  Keypad +  */
+  /*  KEY_PADPERIOD			      */ 0x63,  /*  Keypad . or Delete  */
+  /*  KEY_PAD1				        */ 0x59,  /*  Keypad 1 or End  */
+  /*  KEY_PAD2				        */ 0x5A,  /*  Keypad 2 or Down Arrow  */
+  /*  KEY_PAD3				        */ 0x5B,  /*  Keypad 3 or Page Down  */
+  /*  KEY_PAD4				        */ 0x5C,  /*  Keypad 4 or Left Arrow  */
+  /*  KEY_PAD5				        */ 0x5D,  /*  Keypad 5  */
+  /*  KEY_PAD6				        */ 0x5E,  /*  Keypad 6 or Right Arrow  */
+  /*  KEY_PAD7				        */ 0x5F,  /*  Keypad 7 or Home  */
+  /*  KEY_PAD8				        */ 0x60,  /*  Keypad 8 or Up Arrow  */
+  /*  KEY_PAD9				        */ 0x61,  /*  Keypad 9 or Page Up  */
+  /*  KEY_PAD0				        */ 0x62,  /*  Keypad 0 or Insert  */
+  /*  KEY_PADENTER			      */ 0x58,  /*  Keypad Enter  */
+};
+#endif
+
+uint8 active_key, release_key;
+void key_events(){
+  static uint8 array_filled, key_list_idx, key_array[6], j = 2;
+  memset(&release_key, 0, 2);
+  
+  uint8 n = j - 2;
+  do{
+    if(key_array[n] && !key_status(key_array[n])){
+      release_key = key_array[n];
+      key_array[n] = FALSE;
+      array_filled = FALSE;
+      return;
+    }
+    ++n;
+  }
+  while(n != (j + 1));
+  j = (j == 2) ? 5 : 2;
+  
+  if(!array_filled){
+    uint8 temp = key_list[++key_list_idx%sizeof(key_list)];
+    
+    if(key_status(temp)){
+      if(key_array[0] == temp |
+      key_array[1] == temp |
+      key_array[2] == temp |
+      key_array[3] == temp |
+      key_array[4] == temp |
+      key_array[5] == temp)
+      { return; }
+      
+      if(!key_array[0]) key_array[0] = temp; else 
+      if(!key_array[1]) key_array[1] = temp; else 
+      if(!key_array[2]) key_array[2] = temp; else 
+      if(!key_array[3]) key_array[3] = temp; else 
+      if(!key_array[4]) key_array[4] = temp; else
+      if(!key_array[5]) key_array[5] = temp; else 
+      { ++array_filled; return; }
+      
+      active_key = temp;
+    }
+  }
+  return;
+}
+
+#define key_event_active(a) ((a == active_key))
+#define key_event_release(a) ((a == release_key))
+main { key_events(); }
