@@ -8,6 +8,9 @@
 //Determines if the sticks should be swapped. Default is set to FALSE, set to !FALSE to start with the sticks swapped by default.
 bool swap_sticks_on = FALSE;
 
+//Determines if the sticks should be interleaved. Default is set to FALSE, set to !FALSE to start with legacy mode by default.
+bool legacy_mode_on = FALSE;
+
 //Sets the values for each hold left stick directions and distances distance in the following order: Up, Down, Left, Right, Up Intermediate, Down Intermediate, Left Intermediate, Right Intermediate.
 const fix32 hold_left_stick_directions_and_distances_distance[8] = {-100.0, 100.0, -100.0, 100.0, -60.0, 60.0, -60.0, 60.0};
 
@@ -182,6 +185,11 @@ main {
 	if(key_event_active(KEY_A)) {
 		swap_sticks_on = !swap_sticks_on;
 	}
+	
+    //Interleave sticks for 'legacy' mode
+    if(key_event_active(KEY_7)) {
+        legacy_mode_on = !legacy_mode_on;
+    }    
 		
 	current_left_stick_distance_sq = sq(get_actual(STICK_2_X)) + sq(get_actual(STICK_2_Y));
 	current_right_stick_distance_sq = sq(get_actual(STICK_1_X)) + sq(get_actual(STICK_1_Y));
@@ -213,18 +221,34 @@ main {
 		}
 	}
 	
-	// By default, pass analogue values through, possibly swapped	
+	// By default, pass analogue values through, possibly swapped and/or interleaved	
 	if(swap_sticks_on) {
-		set_val(STICK_2_X, get_actual(STICK_1_X));
-		set_val(STICK_2_Y, get_actual(STICK_1_Y));
-		set_val(STICK_1_X, get_actual(STICK_2_X));
-		set_val(STICK_1_Y, get_actual(STICK_2_Y));
+		if (legacy_mode_on) {
+			set_val(STICK_2_X, get_actual(STICK_2_X));
+			set_val(STICK_2_Y, get_actual(STICK_1_Y));      
+			set_val(STICK_1_X, get_actual(STICK_1_X));
+			set_val(STICK_1_Y, get_actual(STICK_2_Y));
+		}
+		else {			
+			set_val(STICK_2_X, get_actual(STICK_1_X));
+			set_val(STICK_2_Y, get_actual(STICK_1_Y));
+			set_val(STICK_1_X, get_actual(STICK_2_X));
+			set_val(STICK_1_Y, get_actual(STICK_2_Y));
+		}
 	}
 	else {
-		set_val(STICK_2_X, get_actual(STICK_2_X));
-		set_val(STICK_2_Y, get_actual(STICK_2_Y));
-		set_val(STICK_1_X, get_actual(STICK_1_X));
-		set_val(STICK_1_Y, get_actual(STICK_1_Y));
+		if (legacy_mode_on) {
+			set_val(STICK_1_X, get_actual(STICK_2_X));
+			set_val(STICK_1_Y, get_actual(STICK_1_Y));
+			set_val(STICK_2_X, get_actual(STICK_1_X));
+			set_val(STICK_2_Y, get_actual(STICK_2_Y));				
+		}
+		else {	
+			set_val(STICK_2_X, get_actual(STICK_2_X));
+			set_val(STICK_2_Y, get_actual(STICK_2_Y));
+			set_val(STICK_1_X, get_actual(STICK_1_X));
+			set_val(STICK_1_Y, get_actual(STICK_1_Y));
+		}
 	}
 	
 	// If we're converting to button switches, zero out again
