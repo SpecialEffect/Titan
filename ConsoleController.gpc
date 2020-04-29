@@ -223,11 +223,15 @@ main {
 	
 	// By default, pass analogue values through, possibly swapped and/or interleaved	
 	if(swap_sticks_on) {
-		if (legacy_mode_on) {
-			set_val(STICK_2_X, get_actual(STICK_2_X));
-			set_val(STICK_2_Y, get_actual(STICK_1_Y));      
-			set_val(STICK_1_X, get_actual(STICK_1_X));
-			set_val(STICK_1_Y, get_actual(STICK_2_Y));
+		if (legacy_mode_on) {		
+			// Use Stick 2 for legacy controls
+			set_val(STICK_1_X, get_actual(STICK_2_X));
+			set_val(STICK_2_Y, get_actual(STICK_2_Y));			
+			      
+			// we assume legacy is for one-stick use, so we need to make sure other axes are zeroed
+			// if we don't do this, any miscalibration can bias our axes			
+			set_val(STICK_2_X, 0);
+			set_val(STICK_1_Y, 0);	
 		}
 		else {			
 			set_val(STICK_2_X, get_actual(STICK_1_X));
@@ -238,10 +242,14 @@ main {
 	}
 	else {
 		if (legacy_mode_on) {
-			set_val(STICK_1_X, get_actual(STICK_2_X));
-			set_val(STICK_1_Y, get_actual(STICK_1_Y));
-			set_val(STICK_2_X, get_actual(STICK_1_X));
-			set_val(STICK_2_Y, get_actual(STICK_2_Y));				
+			// Use Stick 1 for legacy
+			set_val(STICK_1_X, get_actual(STICK_1_X));
+			set_val(STICK_2_Y, get_actual(STICK_1_Y));			
+			      
+			// we assume legacy is for one-stick use, so we need to make sure other axes are zeroed
+			// if we don't do this, any miscalibration can bias our axes				
+			set_val(STICK_2_X, 0);
+			set_val(STICK_1_Y, 0);
 		}
 		else {	
 			set_val(STICK_2_X, get_actual(STICK_2_X));
