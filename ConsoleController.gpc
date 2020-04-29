@@ -201,6 +201,11 @@ main {
     if(key_event_active(KEY_7)) {
         legacy_mode_on = !legacy_mode_on;
     }    
+	
+	// Swap triggers
+	if (key_event_active(KEY_PAD0)) { //	
+		remapper_swap(BUTTON_5, BUTTON_8);		
+	}
 		
 	current_left_stick_distance_sq = sq(get_actual(STICK_2_X)) + sq(get_actual(STICK_2_Y));
 	current_right_stick_distance_sq = sq(get_actual(STICK_1_X)) + sq(get_actual(STICK_1_Y));
