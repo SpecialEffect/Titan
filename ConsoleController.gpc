@@ -181,6 +181,17 @@ main {
 		mslot_load(2);
 	}
 	
+	// Reset all stick state
+	if (key_event_active(KEY_PAD1)) {
+		legacy_mode_on = FALSE;
+		swap_sticks_on = FALSE;
+		convert_left_stick_directions_to_buttons_on = FALSE;
+		convert_right_stick_directions_to_buttons_on = FALSE;
+	}
+	
+	/* --- Process any toggle requests --- */
+	
+
 	//Swap Sticks and Block Hold Stick Functions If Not Permitted
 	if(key_event_active(KEY_A)) {
 		swap_sticks_on = !swap_sticks_on;
